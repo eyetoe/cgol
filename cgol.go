@@ -25,6 +25,7 @@ var height = flag.Int("h", 40, "Height of the game field")
 var prob = flag.Int("p", 33, "Percent chance any starting cell is 'alive'")
 var sleep = flag.Duration("s", 100, "Percent chance any starting cell is 'alive'")
 var debug = flag.Bool("d", false, "Debug enables table values in addition to regular display. Best with small world sizes e.. 20x20")
+var token = flag.String("t", "[]", "Set the characters (2 ascii characters) that represent a living cell")
 
 func main() {
 	flag.Parse()
@@ -150,7 +151,7 @@ func (w world) display() {
 		for x := 0; x < len(w[0]); x++ {
 			switch w[y][x].alive {
 			case true:
-				fmt.Printf("[]")
+				fmt.Printf(*token)
 			case false:
 				fmt.Printf("  ")
 			}
