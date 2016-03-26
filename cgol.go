@@ -1,34 +1,44 @@
 package main
 
 import (
-	"bufio"
+	"flag"
 	"fmt"
 	"math/rand"
-	"os"
 	"reflect"
 	"time"
 )
 
-const width int = 80
-const height int = 80
-const prob int = 60
+type world [][]cell
 
-// MAIN ///////////////////////////////////////////
+type coords struct {
+	x int
+	y int
+}
+
+type cell struct {
+	alive     bool
+	neighbors int
+}
+
+var width = flag.Int("w", 40, "Width of the game field")
+var height = flag.Int("h", 40, "Height of the game field")
+var prob = flag.Int("p", 33, "Percent chance any starting cell is 'alive'")
+var sleep = flag.Duration("s", 100, "Percent chance any starting cell is 'alive'")
+var debug = flag.Bool("d", false, "Debug enables table values in addition to regular display. Best with small world sizes e.. 20x20")
+
 func main() {
+	flag.Parse()
 
-	new := newWorld(prob)
+	new := newWorld(*prob)
 	new.display()
-	cont()
+	fmt.Println(len(new))
 	for i := 0; true; i++ {
 		new = new.step()
 		new.display()
-		fmt.Println("iteration:", i)
-		time.Sleep(200 * time.Millisecond)
+		fmt.Printf("%dx%d, %d%% seed, %s sleep : iteration:%d\n", *width, *height, *prob, *sleep, i)
+
+		time.Sleep(*sleep * time.Millisecond)
 	}
-
-	//fmt.Println(checkAlive(false, 3))
-
-	//		time.Sleep(1000 * time.Millisecond)
 }
 
 func myNeighbors(c coords) []coords {
@@ -53,34 +63,34 @@ func myNeighbors(c coords) []coords {
 func (w world) step() world {
 
 	// zero out neighbor values
-	for x, _ := range w {
-		for y, _ := range w[x] {
-			w[x][y].neighbors = 0
+	for y := 0; y < len(w); y++ {
+		for x := 0; x < len(w[0]); x++ {
+			w[y][x].neighbors = 0
 		}
 	}
-	// For each cell assign neighbor cells +1
-	for xi, x := range w {
-		for yi, _ := range x {
-			if w[xi][yi].alive == true {
-				nbrs := myNeighbors(coords{xi, yi})
-				//fmt.Println(coords{xi, yi}, "neighbors are:", nbrs)
+	// for each alive cell, update neighbors
+	for y := 0; y < len(w); y++ {
+		for x := 0; x < len(w[0]); x++ {
 
+			// If cell is alive, update neighbors
+			if w[y][x].alive == true {
+				nbrs := myNeighbors(coords{x, y})
+
+				// and 1 to neighbors
 				for _, n := range nbrs {
-					if n.x >= 0 && n.x < width && n.y >= 0 && n.y < height {
-						w[n.x][n.y].neighbors = w[n.x][n.y].neighbors + 1
+					if n.x >= 0 && n.x < *width && n.y >= 0 && n.y < *height {
+						w[n.y][n.x].neighbors++
 
 					}
 				}
 			}
 		}
 	}
-	// set dead or alive
-	for xi, x := range w {
-		for yi, _ := range x {
+	// set next step's alive status
+	for y := 0; y < len(w); y++ {
+		for x := 0; x < len(w[0]); x++ {
 			// set alive here
-			//fmt.Println(w[xi][yi])
-			w[xi][yi].alive = checkAlive(w[xi][yi].alive, w[xi][yi].neighbors)
-			//fmt.Printf("starting vals: %t, %d => new val: %t\n", w[xi][yi].alive, w[xi][yi].neighbors, checkAlive(w[xi][yi].alive, w[xi][yi].neighbors))
+			w[y][x].alive = checkAlive(w[y][x].alive, w[y][x].neighbors)
 		}
 	}
 	return w
@@ -112,9 +122,9 @@ func checkAlive(alive bool, neighbors int) bool {
 
 func newWorld(prob int) world {
 	var new world
-	for c := 1; c <= height; c++ {
+	for c := 1; c <= *height; c++ {
 		var row []cell
-		for r := 1; r <= width; r++ {
+		for r := 1; r <= *width; r++ {
 			if roll(1, 100) <= prob {
 				row = append(row, cell{alive: true})
 			} else {
@@ -126,21 +136,19 @@ func newWorld(prob int) world {
 	return new
 }
 
-type world [][]cell
-
 func (w world) display() {
 	clearscreen()
-	// debug
-	//	for xi, x := range w {
-	//		for yi, y := range x {
-	//			fmt.Printf("%d,%d %t	", xi, yi, y.alive)
-	//		}
-	//		fmt.Println()
-	//	}
-	// end debug
-	for _, x := range w {
-		for _, y := range x {
-			switch y.alive {
+	if *debug == true {
+		for y := 0; y < len(w); y++ {
+			for x := 0; x < len(w[0]); x++ {
+				fmt.Printf("%d,%d %t	", y, x, w[y][x].alive)
+			}
+			fmt.Println()
+		}
+	}
+	for y := 0; y < len(w); y++ {
+		for x := 0; x < len(w[0]); x++ {
+			switch w[y][x].alive {
 			case true:
 				fmt.Printf("[]")
 			case false:
@@ -149,16 +157,6 @@ func (w world) display() {
 		}
 		fmt.Println()
 	}
-}
-
-type coords struct {
-	x int
-	y int
-}
-
-type cell struct {
-	alive     bool
-	neighbors int
 }
 
 func roll(n int, d int) int {
@@ -171,16 +169,6 @@ func roll(n int, d int) int {
 	return num + 1
 }
 
-func cont() {
-	fmt.Printf("Press enter to continue: ")
-	reader := bufio.NewReader(os.Stdin)
-	input, _ := reader.ReadString('\n')
-	choice := string([]byte(input)[0])
-	switch choice {
-	default:
-		return
-	}
-}
 func clearscreen() {
 	fmt.Printf("[H[J")
 }
