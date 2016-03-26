@@ -1,15 +1,14 @@
-* An implementation of John Horton Conway's
-
-* Game of Life
+###### An implementation of John Horton Conway's
+# Game of Life
 
 Works on Mac and Linux.
 
-Mac binary is in the root dir
+Mac binary is already compiled
 
 
-*USAGE
+*USAGE*
 
-Usage of ./cgol:
+```Usage of ./cgol:
   -d    Debug enables table values in addition to regular display. Best with small world sizes e.. 20x20
   -h int
         Height of the game field (default 40)
@@ -21,3 +20,4 @@ Usage of ./cgol:
         Set the characters (2 ascii characters) that represent a living cell (default "[]")
   -w int
         Width of the game field (default 40)
+```
