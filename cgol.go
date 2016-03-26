@@ -5,8 +5,15 @@ import (
 	"fmt"
 	"math/rand"
 	"reflect"
+	"strings"
 	"time"
+
+	"github.com/fatih/color"
 )
+
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
+}
 
 type world [][]cell
 
@@ -20,26 +27,82 @@ type cell struct {
 	neighbors int
 }
 
+// default token 'changeme' gets caught in main to allow for random replacement, which can't happen outside of main.
+var token = flag.String("t", "changeme", "Set the characters (2 ascii characters recommended) that represent a living cell. By default the characters will be randomly selected from a set of nice ones :)")
 var width = flag.Int("w", 40, "Width of the game field")
 var height = flag.Int("h", 40, "Height of the game field")
 var prob = flag.Int("p", 33, "Percent chance any starting cell is 'alive'")
+var genesis = flag.Int("g", 200, "Respawn world after this many itterations. Like a terminal screensaver. :)")
 var sleep = flag.Duration("s", 100, "Percent chance any starting cell is 'alive'")
 var debug = flag.Bool("d", false, "Debug enables table values in addition to regular display. Best with small world sizes e.. 20x20")
-var token = flag.String("t", "[]", "Set the characters (2 ascii characters) that represent a living cell")
+var rainbow []func(...interface{}) string
 
 func main() {
 	flag.Parse()
+	var tokenSet bool = true
 
+	// choose a random color palate
+	chooseColor := func() {
+		pick := rand.Intn(4)
+		switch pick {
+		case 0:
+			rainbow = []func(...interface{}) string{
+				blue,
+				black,
+				white,
+			}
+		case 1:
+			rainbow = []func(...interface{}) string{
+				green,
+				blue,
+				cyan,
+			}
+		case 2:
+			rainbow = []func(...interface{}) string{
+				red,
+				yellow,
+				magenta,
+			}
+		case 3:
+			rainbow = []func(...interface{}) string{
+				white,
+				yellow,
+				green,
+			}
+		}
+	}
+	chooseColor()
+
+	// The language spec clearly states "Basically no one should use strings.Compare."
+	// However in this case the recommended comparison operator '==' doesn't work,
+	// and this performance hit only occurs once during when starting.
+	// Details here:         https://golang.org/src/strings/compare.go
+	if strings.Compare(*token, "changeme") == 0 {
+		tokenSet = false
+		token = &rtoken[rand.Intn(len(rtoken))]
+	}
+
+	// Setup the world
 	new := newWorld(*prob)
 	new.display()
 	fmt.Println(len(new))
 	for i := 0; true; i++ {
 		new = new.step()
 		new.display()
-		fmt.Printf("%dx%d, %d%% seed, %s sleep : iteration:%d\n", *width, *height, *prob, *sleep, i)
+		fmt.Printf("%dx%d, %d%% seed, %s sleep : iteration:%d/%d\n", *width, *height, *prob, *sleep, i, *genesis)
 
 		time.Sleep(*sleep * time.Millisecond)
+		if i == *genesis {
+			new = newWorld(*prob)
+			if tokenSet == false {
+				token = &rtoken[rand.Intn(len(rtoken))]
+			}
+			// re-choose color after each genesis
+			chooseColor()
+			i = 0
+		}
 	}
+
 }
 
 func myNeighbors(c coords) []coords {
@@ -151,7 +214,8 @@ func (w world) display() {
 		for x := 0; x < len(w[0]); x++ {
 			switch w[y][x].alive {
 			case true:
-				fmt.Printf(*token)
+				//fmt.Printf(blue(*token))
+				fmt.Printf(rainbow[rand.Intn(len(rainbow))](*token))
 			case false:
 				fmt.Printf("  ")
 			}
@@ -173,3 +237,20 @@ func roll(n int, d int) int {
 func clearscreen() {
 	fmt.Printf("[H[J")
 }
+
+//rtoken[rand.Intn(len(rtoken))]
+var rtoken = []string{
+	"()",
+	"[]",
+	"<(",
+	"GO",
+}
+
+var green = color.New(color.FgGreen).SprintFunc()
+var blue = color.New(color.FgBlue).SprintFunc()
+var red = color.New(color.FgRed).SprintFunc()
+var yellow = color.New(color.FgYellow).SprintFunc()
+var cyan = color.New(color.FgCyan).SprintFunc()
+var magenta = color.New(color.FgMagenta).SprintFunc()
+var white = color.New(color.FgHiWhite).SprintFunc()
+var black = color.New(color.FgHiBlack).SprintFunc()
