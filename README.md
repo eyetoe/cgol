@@ -22,7 +22,7 @@ Mac binary is already compiled
 
 `  -s duration`
 
-`        Percent chance any starting cell is 'alive' (default 100ns)`
+`        Sleep time between generations followed by ns for nanoseconds`
 
 `  -t string`
 
