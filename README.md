@@ -3,8 +3,6 @@
 
 Works on Mac and Linux.
 
-Mac binary is already compiled
-
 
 *USAGE*
 
