@@ -33,7 +33,7 @@ var width = flag.Int("w", 40, "Width of the game field")
 var height = flag.Int("h", 40, "Height of the game field")
 var prob = flag.Int("p", 33, "Percent chance any starting cell is 'alive'")
 var genesis = flag.Int("g", 200, "Respawn world after this many itterations. Like a terminal screensaver. :)")
-var sleep = flag.Duration("s", 100, "Percent chance any starting cell is 'alive'")
+var sleep = flag.Duration("s", 100, "Sleep time between generations followed by ns for nanoseconds")
 var debug = flag.Bool("d", false, "Debug enables table values in addition to regular display. Best with small world sizes e.. 20x20")
 var rainbow []func(...interface{}) string
 
